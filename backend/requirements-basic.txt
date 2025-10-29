@@ -1,0 +1,6 @@
+# Absolute minimal for demo
+fastapi
+uvicorn
+sqlalchemy
+requests
+python-dotenv

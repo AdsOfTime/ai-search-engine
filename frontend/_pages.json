@@ -1,0 +1,20 @@
+{
+  "functions": {
+    "directory": "_functions"
+  },
+  "build": {
+    "command": "npm run build",
+    "destination": "build",
+    "root_dir": "frontend"
+  },
+  "env": {
+    "NODE_VERSION": "18",
+    "NPM_VERSION": "9"
+  },
+  "preview": {
+    "alias": "ai-search-preview"
+  },
+  "production": {
+    "alias": "ai-search-engine"
+  }
+}

@@ -1,0 +1,41 @@
+# Cloudflare Workers configuration for AI Search Engine
+name = "ai-search-backend"
+main = "cloudflare-workers/index.ts"
+compatibility_date = "2024-10-30"
+
+# Environment variables for production
+[env.production.vars]
+ENVIRONMENT = "production"
+API_VERSION = "v1"
+
+# Database configuration (using Cloudflare D1)
+[[d1_databases]]
+binding = "DB"
+database_name = "ai-search-db"
+database_id = "9a273609-377d-441a-b186-5f923b981908"
+
+# KV Storage for caching
+[[kv_namespaces]]
+binding = "CACHE"
+id = "4f2f564078994c0c8eea8e774e79589e"
+
+# R2 Storage for media files
+[[env.production.r2_buckets]]
+binding = "MEDIA"
+bucket_name = "ai-search-media"
+
+# Worker settings
+# [build]
+# command = "npm run build"
+# cwd = "backend"
+
+# Routes configuration (configure after setting up custom domain)
+# [[routes]]
+# pattern = "your-domain.com/api/*"
+# zone_name = "your-domain.com"
+
+# Environment secrets (set via wrangler secret put)
+# OPENAI_API_KEY
+# DATABASE_URL
+# SECRET_KEY
+# AFFILIATE_KEYS

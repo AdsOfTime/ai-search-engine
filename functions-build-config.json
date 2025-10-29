@@ -1,0 +1,17 @@
+{
+  "name": "ai-search-pages",
+  "production_branch": "main",
+  "build": {
+    "command": "npm run build",
+    "destination": "build",
+    "root_dir": "frontend"
+  },
+  "env": {
+    "NODE_VERSION": "18",
+    "NPM_VERSION": "8"
+  },
+  "functions": {
+    "directory": "_functions",
+    "node_compat": true
+  }
+}

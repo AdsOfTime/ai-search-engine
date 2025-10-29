@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Product Search Engine</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8fafc;
+            line-height: 1.6;
+        }
+        
+        .hero-section {
+            background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+            padding: 4rem 0;
+            text-align: center;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+        
+        .hero-title {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 1rem;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: #64748b;
+            margin-bottom: 2rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .search-input {
+            width: 100%;
+            max-width: 600px;
+            padding: 1rem;
+            font-size: 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            margin: 1rem auto;
+            display: block;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+        
+        .categories-section {
+            padding: 2rem 0;
+        }
+        
+        .section-title {
+            font-size: 2rem;
+            font-weight: 600;
+            text-align: center;
+            margin: 3rem 0 2rem 0;
+            color: #1e293b;
+        }
+        
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .category-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .category-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .category-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .category-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #1e293b;
+        }
+        
+        .category-description {
+            color: #64748b;
+            line-height: 1.6;
+        }
+        
+        .demo-section {
+            padding: 2rem 0;
+            background: white;
+            text-align: center;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            background: #10b981;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .results-section {
+            padding: 2rem 0;
+            background: #f8fafc;
+            min-height: 400px;
+        }
+        
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .product-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .product-name {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+        
+        .product-brand {
+            color: #6366f1;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .product-price {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #059669;
+            margin-bottom: 0.5rem;
+        }
+        
+        .product-rating {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .product-category {
+            display: inline-block;
+            background: #e0e7ff;
+            color: #3730a3;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            text-transform: capitalize;
+        }
+        
+        .api-link {
+            color: #6366f1;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .api-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="hero-section">
+        <div class="container">
+            <h1 class="hero-title">🤖 AI-Powered Product Search Engine</h1>
+            <p class="hero-subtitle">
+                Find the best products at the most competitive prices across cosmetics, 
+                fashion, and healthcare categories with intelligent search and price comparison.
+            </p>
+            <input 
+                class="search-input" 
+                type="text" 
+                placeholder="Search for cosmetics, fashion, or healthcare products..."
+                onkeypress="handleSearch(event)"
+            >
+        </div>
+    </div>
+
+    <div class="categories-section">
+        <div class="container">
+            <h2 class="section-title">Shop by Category</h2>
+            <div class="categories-grid">
+                <div class="category-card" onclick="searchCategory('cosmetics')">
+                    <div class="category-icon">💄</div>
+                    <h3 class="category-title">Cosmetics & Beauty</h3>
+                    <p class="category-description">Find the best makeup, skincare, and beauty products from top brands at competitive prices.</p>
+                </div>
+                
+                <div class="category-card" onclick="searchCategory('fashion')">
+                    <div class="category-icon">👗</div>
+                    <h3 class="category-title">Fashion & Style</h3>
+                    <p class="category-description">Discover trendy clothing, shoes, and accessories across multiple fashion retailers.</p>
+                </div>
+                
+                <div class="category-card" onclick="searchCategory('healthcare')">
+                    <div class="category-icon">🏥</div>
+                    <h3 class="category-title">Health & Wellness</h3>
+                    <p class="category-description">Compare prices on supplements, medications, and health products for your wellbeing.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Results Section -->
+    <div id="results-section" class="results-section" style="display: none;">
+        <div class="container">
+            <h2 id="results-title" class="section-title">Search Results</h2>
+            <div id="results-grid" class="results-grid"></div>
+        </div>
+    </div>
+
+    <div class="demo-section">
+        <div class="container">
+            <div class="status-badge">✅ System Running</div>
+            <h2 class="section-title">Your AI Product Search Engine is Live!</h2>
+            <p style="color: #64748b; margin-bottom: 1rem;">
+                🎉 Congratulations! Your AI-powered search engine is successfully running.
+            </p>
+            <p style="color: #64748b; margin-bottom: 1rem;">
+                Backend API Documentation: 
+                <a href="http://localhost:8002/docs" target="_blank" class="api-link">http://localhost:8002/docs</a>
+            </p>
+            <p style="color: #64748b;">
+                Ready to start building your product database and implementing AI features!
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8002/api';
+        
+        async function handleSearch(event) {
+            if (event.key === 'Enter') {
+                const query = event.target.value.trim();
+                if (query) {
+                    await searchProducts(query);
+                }
+            }
+        }
+        
+        async function searchCategory(category) {
+            const categories = {
+                'cosmetics': 'Cosmetics & Beauty',
+                'fashion': 'Fashion & Style', 
+                'healthcare': 'Health & Wellness'
+            };
+            
+            console.log(`Searching ${categories[category]} products...`);
+            await searchProducts('', category);
+        }
+
+        async function searchProducts(query = '', category = '') {
+            try {
+                console.log('Searching products...', { query, category });
+                
+                // Build search URL - API requires 'q' parameter
+                const params = new URLSearchParams();
+                
+                // If no query but we have category, use category as query
+                if (!query && category) {
+                    params.append('q', 'product'); // Generic search term
+                    params.append('category', category);
+                } else if (query) {
+                    params.append('q', query);
+                    if (category) params.append('category', category);
+                } else {
+                    params.append('q', 'product'); // Default search
+                }
+                
+                const url = `${API_BASE}/search/products?${params.toString()}`;
+                console.log('API URL:', url);
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                console.log('Search results:', data);
+                
+                if (data.total > 0) {
+                    showResults(data, query || category);
+                } else {
+                    alert(`No products found for "${query || category}"`);
+                }
+                
+            } catch (error) {
+                console.error('Search error:', error);
+                alert(`Search failed: ${error.message}\n\nMake sure your backend server is running on port 8002`);
+            }
+        }
+        
+        function showResults(data, searchTerm) {
+            const resultsSection = document.getElementById('results-section');
+            const resultsTitle = document.getElementById('results-title');
+            const resultsGrid = document.getElementById('results-grid');
+            
+            // Update title
+            resultsTitle.textContent = `Found ${data.total} products for "${searchTerm}"`;
+            
+            // Clear previous results
+            resultsGrid.innerHTML = '';
+            
+            // Create product cards
+            if (data.products && data.products.length > 0) {
+                data.products.forEach(product => {
+                    const productCard = createProductCard(product);
+                    resultsGrid.appendChild(productCard);
+                });
+                
+                // Show results section
+                resultsSection.style.display = 'block';
+                
+                // Scroll to results
+                resultsSection.scrollIntoView({ behavior: 'smooth' });
+            } else {
+                alert(`No products found for "${searchTerm}"`);
+            }
+        }
+        
+        function createProductCard(product) {
+            const card = document.createElement('div');
+            card.className = 'product-card';
+            
+            const stars = '★'.repeat(Math.floor(product.rating)) + '☆'.repeat(5 - Math.floor(product.rating));
+            
+            card.innerHTML = `
+                <div class="product-name">${product.name || 'Unknown Product'}</div>
+                <div class="product-brand">${product.brand || 'Unknown Brand'}</div>
+                <div class="product-price">$${product.price ? product.price.toFixed(2) : '0.00'}</div>
+                <div class="product-rating">
+                    <span>${stars}</span>
+                    <span>${product.rating ? product.rating.toFixed(1) : '0.0'}</span>
+                    <span>(${product.review_count || 0} reviews)</span>
+                </div>
+                <div class="product-category">${product.category || 'Unknown'}</div>
+                <div style="margin-top: 1rem; color: #64748b; font-size: 0.9rem;">
+                    ${product.description ? product.description.substring(0, 100) + '...' : 'No description available'}
+                </div>
+                <div style="margin-top: 0.5rem; font-size: 0.8rem; color: #9ca3af;">
+                    Source: ${product.source_website || 'Unknown'}
+                </div>
+            `;
+            
+            return card;
+        }
+        
+        // Test API connection on page load
+        async function testConnection() {
+            try {
+                const response = await fetch(`${API_BASE}/../health`);
+                const health = await response.json();
+                console.log('✅ Backend health check:', health);
+                
+                // Update the status in the demo
+                const statusBadge = document.querySelector('.status-badge');
+                if (statusBadge) {
+                    statusBadge.textContent = '✅ AI Search Engine Connected';
+                    statusBadge.style.background = 'linear-gradient(135deg, #10b981 0%, #065f46 100%)';
+                }
+                
+            } catch (error) {
+                console.warn('⚠️ Backend connection failed:', error);
+                const statusBadge = document.querySelector('.status-badge');
+                if (statusBadge) {
+                    statusBadge.textContent = '⚠️ Backend Disconnected';
+                    statusBadge.style.background = 'linear-gradient(135deg, #f59e0b 0%, #92400e 100%)';
+                }
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 AI Product Search Engine Demo Loaded!');
+            console.log('📡 Backend API: http://localhost:8002/docs');
+            console.log('💡 Database contains 90+ products ready for search');
+            
+            testConnection();
+        });
+    </script>
+</body>
+</html>
