@@ -69,7 +69,7 @@ const App: React.FC = () => {
 
   return (
     <div style={{ minHeight: '100vh', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
-      {/* Hero Section */}
+      {/* Hero Section with Search */}
       <section className="hero-section">
         <div className="container">
           <h1 className="hero-title">
@@ -92,10 +92,49 @@ const App: React.FC = () => {
         </div>
       </section>
 
-      {/* Categories Section */}
-      <section style={{ padding: '2rem 0' }}>
+      {/* Search Results Section - Right under search bar */}
+      {hasSearched && (
+        <section style={{ padding: '2rem 0', backgroundColor: '#f8fafc', borderTop: '1px solid #e2e8f0' }}>
+          <div className="container">
+            <div style={{ marginBottom: '1.5rem' }}>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: '600', color: '#1e293b', marginBottom: '0.5rem' }}>
+                {loading ? 'Searching...' : `Search Results`}
+              </h2>
+              {!loading && <p style={{ color: '#64748b', fontSize: '0.875rem' }}>Found {totalResults} products</p>}
+            </div>
+            
+            {loading && (
+              <div style={{ textAlign: 'center', padding: '3rem', backgroundColor: 'white', borderRadius: '8px' }}>
+                <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>🔍</div>
+                <p style={{ color: '#64748b' }}>Searching for products...</p>
+              </div>
+            )}
+            
+            {!loading && products.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '3rem', backgroundColor: 'white', borderRadius: '8px' }}>
+                <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>🤷‍♂️</div>
+                <p style={{ color: '#64748b', marginBottom: '0.5rem' }}>No products found</p>
+                <p style={{ color: '#94a3b8', fontSize: '0.875rem' }}>Try a different search term or browse categories below</p>
+              </div>
+            )}
+            
+            {!loading && products.length > 0 && (
+              <div className="products-grid">
+                {products.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* Categories Section - Always show for browsing */}
+      <section style={{ padding: '2rem 0', backgroundColor: hasSearched ? 'white' : '#f8fafc' }}>
         <div className="container">
-          <h2 className="section-title">Shop by Category</h2>
+          <h2 className="section-title">
+            {hasSearched ? 'Browse by Category' : 'Shop by Category'}
+          </h2>
           <div className="categories-grid">
             {categories.map((category) => (
               <div 
@@ -112,38 +151,7 @@ const App: React.FC = () => {
         </div>
       </section>
 
-      {/* Search Results Section */}
-      {hasSearched && (
-        <section style={{ padding: '2rem 0', backgroundColor: 'white' }}>
-          <div className="container">
-            <h2 className="section-title">
-              {loading ? 'Searching...' : `Search Results (${totalResults} found)`}
-            </h2>
-            
-            {loading && (
-              <div style={{ textAlign: 'center', padding: '2rem' }}>
-                <p>🔍 Searching for products...</p>
-              </div>
-            )}
-            
-            {!loading && products.length === 0 && (
-              <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
-                <p>No products found. Try a different search term.</p>
-              </div>
-            )}
-            
-            {!loading && products.length > 0 && (
-              <div className="products-grid">
-                {products.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* Demo Section - Only show if no search has been performed */}
+      {/* Welcome Section - Only show if no search has been performed */}
       {!hasSearched && (
         <section style={{ padding: '2rem 0', backgroundColor: 'white' }}>
           <div className="container">
