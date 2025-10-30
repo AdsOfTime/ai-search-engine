@@ -15,6 +15,17 @@ interface Product {
   image_url?: string
   in_stock: boolean
   affiliate_links?: Record<string, string>
+  commission_rate?: number
+  featured_placement?: boolean
+}
+
+interface AffiliateClick {
+  id: string
+  product_id: string
+  user_id?: string
+  retailer: string
+  timestamp: string
+  revenue_potential: number
 }
 
 interface SearchQuery {
@@ -285,7 +296,211 @@ app.get('/api/recommendations/:userId?', async (c) => {
   }
 })
 
+// 💰 MONETIZATION ENDPOINTS
+
+// Track affiliate clicks and generate revenue
+app.post('/api/affiliate/click', async (c) => {
+  try {
+    const { product_id, retailer, user_id } = await c.req.json()
+    
+    // Generate affiliate link and tracking
+    const affiliateData = generateAffiliateLink(product_id, retailer)
+    
+    // Store click for analytics
+    const clickId = crypto.randomUUID()
+    await c.env.DB.prepare(`
+      INSERT INTO affiliate_clicks (id, product_id, user_id, retailer, timestamp, revenue_potential)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).bind(
+      clickId,
+      product_id,
+      user_id || null,
+      retailer,
+      new Date().toISOString(),
+      affiliateData.commission_estimate
+    ).run()
+
+    return c.json({
+      click_id: clickId,
+      affiliate_url: affiliateData.url,
+      commission_rate: affiliateData.commission_rate,
+      tracking_enabled: true
+    })
+
+  } catch (error) {
+    console.error('Affiliate click error:', error)
+    return c.json({ error: 'Failed to track click' }, 500)
+  }
+})
+
+// Revenue analytics dashboard
+app.get('/api/analytics/revenue', async (c) => {
+  try {
+    // Get affiliate performance
+    const affiliateStats = await c.env.DB.prepare(`
+      SELECT 
+        retailer,
+        COUNT(*) as clicks,
+        SUM(revenue_potential) as estimated_revenue,
+        DATE(timestamp) as date
+      FROM affiliate_clicks 
+      WHERE timestamp > datetime('now', '-30 days')
+      GROUP BY retailer, DATE(timestamp)
+      ORDER BY estimated_revenue DESC
+    `).all()
+
+    // Get top performing products
+    const topProducts = await c.env.DB.prepare(`
+      SELECT 
+        p.name, p.brand, p.category, p.price,
+        COUNT(ac.id) as clicks,
+        SUM(ac.revenue_potential) as revenue
+      FROM products p
+      JOIN affiliate_clicks ac ON p.id = ac.product_id
+      WHERE ac.timestamp > datetime('now', '-30 days')
+      GROUP BY p.id
+      ORDER BY revenue DESC
+      LIMIT 20
+    `).all()
+
+    // Calculate revenue projections
+    const totalClicks = affiliateStats.results.reduce((sum: number, row: any) => sum + row.clicks, 0)
+    const totalRevenue = affiliateStats.results.reduce((sum: number, row: any) => sum + row.estimated_revenue, 0)
+    
+    const projections = {
+      daily_avg_clicks: totalClicks / 30,
+      daily_avg_revenue: totalRevenue / 30,
+      monthly_projection: totalRevenue,
+      annual_projection: totalRevenue * 12,
+      revenue_per_click: totalClicks > 0 ? totalRevenue / totalClicks : 0
+    }
+
+    return c.json({
+      affiliate_performance: affiliateStats.results,
+      top_products: topProducts.results,
+      revenue_projections: projections,
+      last_updated: new Date().toISOString()
+    })
+
+  } catch (error) {
+    console.error('Revenue analytics error:', error)
+    return c.json({ error: 'Failed to get analytics' }, 500)
+  }
+})
+
+// Premium features endpoint (requires auth)
+app.get('/api/premium/advanced-search', async (c) => {
+  try {
+    const authHeader = c.req.header('Authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return c.json({ error: 'Premium feature requires authentication' }, 401)
+    }
+
+    // Enhanced search with premium filters
+    const query: SearchQuery = {
+      q: c.req.query('q') || '',
+      category: c.req.query('category'),
+      min_price: c.req.query('min_price') ? parseFloat(c.req.query('min_price')!) : undefined,
+      max_price: c.req.query('max_price') ? parseFloat(c.req.query('max_price')!) : undefined,
+      brand: c.req.query('brand'),
+      sort_by: c.req.query('sort_by') || 'relevance',
+      limit: 50, // Premium users get more results
+      offset: c.req.query('offset') ? parseInt(c.req.query('offset')!) : 0
+    }
+
+    // Premium-only filters
+    const rating_min = c.req.query('rating_min') ? parseFloat(c.req.query('rating_min')!) : undefined
+    const review_count_min = c.req.query('review_count_min') ? parseInt(c.req.query('review_count_min')!) : undefined
+    const availability = c.req.query('availability') // in_stock, out_of_stock, all
+    const discount_min = c.req.query('discount_min') ? parseFloat(c.req.query('discount_min')!) : undefined
+
+    // Build enhanced SQL query
+    let sql = `
+      SELECT 
+        id, name, brand, category, price, rating, review_count, 
+        description, image_url, in_stock, affiliate_links
+      FROM products 
+      WHERE 1=1
+    `
+    const params: any[] = []
+
+    if (query.q) {
+      sql += ` AND (name LIKE ? OR description LIKE ? OR brand LIKE ?)`
+      params.push(`%${query.q}%`, `%${query.q}%`, `%${query.q}%`)
+    }
+
+    if (rating_min) {
+      sql += ` AND rating >= ?`
+      params.push(rating_min)
+    }
+
+    if (review_count_min) {
+      sql += ` AND review_count >= ?`
+      params.push(review_count_min)
+    }
+
+    if (availability === 'in_stock') {
+      sql += ` AND in_stock = 1`
+    } else if (availability === 'out_of_stock') {
+      sql += ` AND in_stock = 0`
+    }
+
+    sql += ` ORDER BY rating DESC, review_count DESC LIMIT ? OFFSET ?`
+    params.push(query.limit, query.offset)
+
+    const results = await c.env.DB.prepare(sql).bind(...params).all()
+
+    return c.json({
+      products: results.results,
+      total: results.results.length,
+      premium_features_used: {
+        advanced_filters: true,
+        enhanced_sorting: true,
+        increased_results: true
+      },
+      query_analysis: await analyzeSearchIntent(query.q || '')
+    })
+
+  } catch (error) {
+    console.error('Premium search error:', error)
+    return c.json({ error: 'Premium search failed' }, 500)
+  }
+})
+
 // Helper Functions for AI Features
+
+// Monetization Helper Functions
+function generateAffiliateLink(productId: string, retailer: string) {
+  const affiliatePrograms = {
+    amazon: { tag: 'aiprodsearch-20', commission: 0.04, base: 'https://www.amazon.com/dp/' },
+    sephora: { tag: 'aisearch', commission: 0.05, base: 'https://www.sephora.com/' },
+    target: { tag: 'aisearch', commission: 0.03, base: 'https://www.target.com/' },
+    cvs: { tag: 'aisearch', commission: 0.04, base: 'https://www.cvs.com/' },
+    ulta: { tag: 'aisearch', commission: 0.06, base: 'https://www.ulta.com/' }
+  }
+
+  const program = affiliatePrograms[retailer as keyof typeof affiliatePrograms]
+  if (!program) {
+    return {
+      url: `https://example.com/products/${productId}`,
+      commission_rate: 0,
+      commission_estimate: 0
+    }
+  }
+
+  // Generate tracking URL
+  const trackingId = crypto.randomUUID().substring(0, 8)
+  const affiliateUrl = `${program.base}${productId}?tag=${program.tag}&ref=aisearch_${trackingId}`
+  
+  // Estimate commission (average product price $25)
+  const estimatedCommission = 25 * program.commission
+
+  return {
+    url: affiliateUrl,
+    commission_rate: program.commission,
+    commission_estimate: estimatedCommission
+  }
+}
 
 async function enhanceSearchQuery(query: string, apiKey: string): Promise<string> {
   if (!query || !apiKey) return query

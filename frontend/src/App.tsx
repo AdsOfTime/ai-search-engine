@@ -2,6 +2,7 @@ import React from 'react';
 import './App.css';
 import { searchAPI } from './services/api';
 import ProductCard from './components/ProductCard';
+import RevenueDashboard from './components/RevenueDashboard';
 import { Product } from './types/index';
 
 const App: React.FC = () => {
@@ -10,6 +11,15 @@ const App: React.FC = () => {
   const [loading, setLoading] = React.useState(false);
   const [hasSearched, setHasSearched] = React.useState(false);
   const [totalResults, setTotalResults] = React.useState(0);
+  const [showRevenueDashboard, setShowRevenueDashboard] = React.useState(false);
+
+  // Check URL for admin dashboard access
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('admin') === 'revenue' || window.location.hash === '#revenue') {
+      setShowRevenueDashboard(true);
+    }
+  }, []);
 
   const categories = [
     {
@@ -66,6 +76,31 @@ const App: React.FC = () => {
       setLoading(false);
     }
   };
+
+  // Show revenue dashboard if requested
+  if (showRevenueDashboard) {
+    return (
+      <div style={{ minHeight: '100vh', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+        <div style={{ padding: '1rem', backgroundColor: '#1f2937', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h1 style={{ margin: 0, fontSize: '1.25rem' }}>AI Search Engine - Admin Dashboard</h1>
+          <button 
+            onClick={() => setShowRevenueDashboard(false)}
+            style={{ 
+              padding: '0.5rem 1rem',
+              backgroundColor: '#374151',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer'
+            }}
+          >
+            ← Back to Search
+          </button>
+        </div>
+        <RevenueDashboard />
+      </div>
+    );
+  }
 
   return (
     <div style={{ minHeight: '100vh', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
