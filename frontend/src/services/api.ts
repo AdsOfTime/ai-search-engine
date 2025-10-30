@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { SearchParams, SearchResults, Product, Review, PriceHistory } from '../types';
+import { SearchParams, SearchResults, Product, Review, PriceHistory } from '../types/index';
 
 // Cloudflare Worker API URL - now using your deployed worker
 const getApiUrl = () => {

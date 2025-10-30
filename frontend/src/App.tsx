@@ -2,7 +2,7 @@ import React from 'react';
 import './App.css';
 import { searchAPI } from './services/api';
 import ProductCard from './components/ProductCard';
-import { Product } from './types';
+import { Product } from './types/index';
 
 const App: React.FC = () => {
   const [searchQuery, setSearchQuery] = React.useState('');
