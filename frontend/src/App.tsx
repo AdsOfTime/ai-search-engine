@@ -1,8 +1,15 @@
 import React from 'react';
 import './App.css';
+import { searchAPI } from './services/api';
+import ProductCard from './components/ProductCard';
+import { Product } from './types';
 
 const App: React.FC = () => {
   const [searchQuery, setSearchQuery] = React.useState('');
+  const [products, setProducts] = React.useState<Product[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const [hasSearched, setHasSearched] = React.useState(false);
+  const [totalResults, setTotalResults] = React.useState(0);
 
   const categories = [
     {
@@ -25,14 +32,38 @@ const App: React.FC = () => {
     }
   ];
 
-  const handleCategoryClick = (categoryId: string) => {
-    alert(`Searching for ${categoryId} products...`);
+  const handleCategoryClick = async (categoryId: string) => {
+    setLoading(true);
+    setHasSearched(true);
+    try {
+      const results = await searchAPI.searchProducts({ 
+        q: '', 
+        category: categoryId === 'cosmetics' ? 'makeup' : categoryId 
+      });
+      setProducts(results.products);
+      setTotalResults(results.total);
+      setSearchQuery('');
+    } catch (error) {
+      console.error('Category search failed:', error);
+      alert('Search failed. Please try again.');
+    }
+    setLoading(false);
   };
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      alert(`Searching for: ${searchQuery}`);
+      setLoading(true);
+      setHasSearched(true);
+      try {
+        const results = await searchAPI.searchProducts({ q: searchQuery.trim() });
+        setProducts(results.products);
+        setTotalResults(results.total);
+      } catch (error) {
+        console.error('Search failed:', error);
+        alert('Search failed. Please check your connection and try again.');
+      }
+      setLoading(false);
     }
   };
 
@@ -81,17 +112,50 @@ const App: React.FC = () => {
         </div>
       </section>
 
-      {/* Demo Section */}
-      <section style={{ padding: '2rem 0', backgroundColor: 'white' }}>
-        <div className="container">
-          <h2 className="section-title">Demo Products</h2>
-          <div style={{ textAlign: 'center', color: '#64748b' }}>
-            <p>🎉 Your AI Product Search Engine is running!</p>
-            <p>Backend API available at: <a href="http://localhost:8000/docs" target="_blank" rel="noopener noreferrer">http://localhost:8000/docs</a></p>
-            <p>Start building your product database and AI features.</p>
+      {/* Search Results Section */}
+      {hasSearched && (
+        <section style={{ padding: '2rem 0', backgroundColor: 'white' }}>
+          <div className="container">
+            <h2 className="section-title">
+              {loading ? 'Searching...' : `Search Results (${totalResults} found)`}
+            </h2>
+            
+            {loading && (
+              <div style={{ textAlign: 'center', padding: '2rem' }}>
+                <p>🔍 Searching for products...</p>
+              </div>
+            )}
+            
+            {!loading && products.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
+                <p>No products found. Try a different search term.</p>
+              </div>
+            )}
+            
+            {!loading && products.length > 0 && (
+              <div className="products-grid">
+                {products.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            )}
           </div>
-        </div>
-      </section>
+        </section>
+      )}
+
+      {/* Demo Section - Only show if no search has been performed */}
+      {!hasSearched && (
+        <section style={{ padding: '2rem 0', backgroundColor: 'white' }}>
+          <div className="container">
+            <h2 className="section-title">Get Started</h2>
+            <div style={{ textAlign: 'center', color: '#64748b' }}>
+              <p>🎉 Your AI Product Search Engine is ready!</p>
+              <p>Try searching for "makeup", "skincare", or browse categories above.</p>
+              <p>Backend API: <a href="https://ai-search-backend.dnash29.workers.dev/api/health" target="_blank" rel="noopener noreferrer">Live on Cloudflare Workers</a></p>
+            </div>
+          </div>
+        </section>
+      )}
     </div>
   );
 };
