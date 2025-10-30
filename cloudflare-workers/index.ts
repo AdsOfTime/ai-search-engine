@@ -50,7 +50,7 @@ const app = new Hono<{
 
 // CORS middleware
 app.use('*', cors({
-  origin: ['https://your-domain.com', 'https://*.pages.dev'],
+  origin: ['https://ai-search-engine-1hh.pages.dev', 'https://*.pages.dev', 'http://localhost:3000'],
   allowHeaders: ['Content-Type', 'Authorization'],
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 }))
@@ -86,10 +86,7 @@ app.get('/api/search/products', async (c) => {
       return c.json(cached)
     }
 
-    // AI Enhancement: Enhance search query using OpenAI
-    const enhancedQuery = await enhanceSearchQuery(query.q, c.env.OPENAI_API_KEY)
-    
-    // Build SQL query with AI-enhanced terms
+    // Build SQL query with search terms
     let sql = `
       SELECT 
         id, name, brand, category, price, rating, review_count, 
@@ -99,11 +96,22 @@ app.get('/api/search/products', async (c) => {
     `
     const params: any[] = []
 
-    // Add search conditions
-    if (enhancedQuery) {
-      sql += ` AND (name LIKE ? OR description LIKE ? OR brand LIKE ?)`
-      const searchTerm = `%${enhancedQuery}%`
-      params.push(searchTerm, searchTerm, searchTerm)
+    // Add search conditions - prioritize basic search first
+    if (query.q && query.q.length > 0) {
+      sql += ` AND (name LIKE ? OR description LIKE ? OR brand LIKE ? OR category LIKE ?)`
+      const searchTerm = `%${query.q}%`
+      params.push(searchTerm, searchTerm, searchTerm, searchTerm)
+    }
+    
+    // AI Enhancement: Try to enhance search query using OpenAI (async, won't block search)
+    let enhancedQuery = ''
+    try {
+      if (query.q && c.env.OPENAI_API_KEY) {
+        enhancedQuery = await enhanceSearchQuery(query.q, c.env.OPENAI_API_KEY)
+      }
+    } catch (error) {
+      // AI enhancement failed, continue with basic search
+      console.log('AI enhancement failed:', error)
     }
 
     if (query.category) {
