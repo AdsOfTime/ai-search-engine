@@ -6,6 +6,8 @@ interface ProductCardProps {
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+  const [imageError, setImageError] = React.useState(false);
+
   const handleViewDetails = (e: React.MouseEvent) => {
     e.stopPropagation();
     // Show product details in alert for now
@@ -13,13 +15,35 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     alert(`${product.name}\n\n🏷️ Brand: ${product.brand}\n💰 Price: $${product.price}\n⭐ Rating: ${product.rating?.toFixed(1) || 'N/A'}/5 (${product.review_count || 0} reviews)\n📝 Category: ${product.category}\n\n${product.description || 'No description available'}`);
   };
 
+  const handleImageError = () => {
+    setImageError(true);
+  };
+
   return (
     <div className="product-card">
-      <img 
-        className="product-image"
-        src={product.image_url || '/placeholder-product.jpg'} 
-        alt={product.name}
-      />
+      {imageError || !product.image_url ? (
+        <div 
+          className="product-image"
+          style={{
+            height: '200px',
+            backgroundColor: '#f3f4f6',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '3rem',
+            color: '#9ca3af'
+          }}
+        >
+          🎨
+        </div>
+      ) : (
+        <img 
+          className="product-image"
+          src={product.image_url} 
+          alt={product.name}
+          onError={handleImageError}
+        />
+      )}
       <div style={{ padding: '1rem' }}>
         <div className="product-brand">{product.brand}</div>
         <h3 className="product-name">{product.name}</h3>
